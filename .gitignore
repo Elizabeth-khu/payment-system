@@ -1,0 +1,17 @@
+.gradle/
+build/
+out/
+bin/
+*.log
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Mac OS ###
+.DS_Store
+
+.kotlin/
+HELP.md

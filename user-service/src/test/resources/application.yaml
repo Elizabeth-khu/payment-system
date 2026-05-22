@@ -1,0 +1,24 @@
+spring:
+  docker:
+    compose:
+      enabled: true
+      skip:
+        in-tests: false
+      file: src/test/resources/compose.yaml
+      lifecycle-management: start-and-stop
+      readiness:
+        wait: always
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect

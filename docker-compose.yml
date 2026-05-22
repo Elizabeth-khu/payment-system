@@ -1,0 +1,29 @@
+services:
+  user-db:
+    image: postgres:16
+    container_name: user-postgres
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: user_admin
+      POSTGRES_PASSWORD: secret_password
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: order_management_redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  user-app:
+    build:
+      context: ./user-service
+    container_name: user-service-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - user-db
+      - redis
