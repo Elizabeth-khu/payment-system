@@ -3,6 +3,8 @@ package com.innowise.userservice.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -26,7 +28,8 @@ import java.util.List;
 public class User extends BaseAuditableEntity {
 
     @Id
-    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", nullable = false, unique = true)
     private String id;
 
     @Column(name = "name", nullable = false)
@@ -45,7 +48,7 @@ public class User extends BaseAuditableEntity {
     @Column(name = "active", nullable = false)
     private boolean active = true;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<PaymentCard> paymentCards = new ArrayList<>();
 }

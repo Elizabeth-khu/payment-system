@@ -7,18 +7,18 @@ services:
       POSTGRES_USER: user_admin
       POSTGRES_PASSWORD: secret_password
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
   redis:
     image: redis:7.2-alpine
-    container_name: order_management_redis
+    container_name: user-redis
     ports:
       - "6379:6379"
     restart: always
 
   user-app:
     build:
-      context: ./user-service
+      context: .
     container_name: user-service-app
     ports:
       - "8080:8080"
@@ -26,4 +26,4 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - user-db
-      - redis
+      - user-redis

@@ -1,4 +1,4 @@
-package com.innowise.userservice.specification;
+package com.innowise.userservice.repository.specification;
 
 import com.innowise.userservice.entity.User;
 import org.springframework.data.jpa.domain.Specification;

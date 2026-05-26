@@ -5,5 +5,6 @@ RUN gradle clean build -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=builder /app/build/libs/*-SNAPSHOT.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=docker"]
+COPY --from=builder /app/user-service/build/libs/*-SNAPSHOT.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

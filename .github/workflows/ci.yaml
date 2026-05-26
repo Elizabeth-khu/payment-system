@@ -1,15 +1,18 @@
-name: User Service CI Pipeline
+name: User Service CI/CD
 
 on:
   push:
-    branches: [ "main", "master", "develop" ]
+    branches:
+      - '**'
   pull_request:
-    branches: [ "main", "master", "develop" ]
+    branches:
+      - main
+      - master
+      - develop
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -19,7 +22,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+          cache: 'gradle'
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
@@ -27,6 +30,9 @@ jobs:
       - name: Build and run Unit/Integration Tests
         run: ./gradlew :user-service:build
 
-      - name: Checkstyle (Code Quality)
-        run: ./gradlew :user-service:checkstyleMain :user-service:checkstyleTest
+      - name: SonarQube Analysis
+        run: ./gradlew :user-service:sonar
         continue-on-error: true
+
+      - name: Build Docker Image
+        run: docker build -t innowise/user-service:latest -f user-service/Dockerfile .

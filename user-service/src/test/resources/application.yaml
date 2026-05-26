@@ -1,24 +1,21 @@
 spring:
-  docker:
-    compose:
-      enabled: true
-      skip:
-        in-tests: false
-      file: src/test/resources/compose.yaml
-      lifecycle-management: start-and-stop
-      readiness:
-        wait: always
-
-  datasource:
-    driver-class-name: org.postgresql.Driver
-
+  application:
+    name: user-service
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
-
   jpa:
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    liquibase: DEBUG
+    org.hibernate.SQL: DEBUG

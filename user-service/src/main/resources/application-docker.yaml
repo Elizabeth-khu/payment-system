@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: jdbc:postgresql://user-db:5432/user_db
-    username: user_admin
-    password: secret_password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://user-db:5432/user_db}
+    username: ${SPRING_DATASOURCE_USERNAME:user_admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:secret_password}
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${SPRING_REDIS_HOST:user-redis}
+      port: ${SPRING_REDIS_PORT:6379}

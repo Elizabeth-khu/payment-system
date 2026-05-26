@@ -8,7 +8,7 @@ import com.innowise.userservice.exception.ResourceNotFoundException;
 import com.innowise.userservice.mapper.UserMapper;
 import com.innowise.userservice.repository.UserRepository;
 import com.innowise.userservice.service.UserService;
-import com.innowise.userservice.specification.UserSpecification;
+import com.innowise.userservice.repository.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -58,12 +58,24 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @CacheEvict(value = "users", key = "#id")
+    public UserResponseDto activateUser(String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        user.setActive(true);
+        User savedUser = userRepository.save(user);
+
+        return userMapper.toResponseDto(savedUser);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "users", key = "#id")
     public void deactivateUser(String id) {
         log.info("Deactivating user with id: {}", id);
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-
         user.setActive(false);
         userRepository.save(user);
     }
@@ -76,7 +88,6 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-
         return userMapper.toResponseDto(user);
     }
 
