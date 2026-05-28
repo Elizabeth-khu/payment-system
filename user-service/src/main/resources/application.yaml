@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: user-service
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  docker:
+    compose:
+      enabled: true
+      file: classpath:compose.yaml
+      lifecycle-management: start-and-stop
+
+logging:
+  level:
+    liquibase: DEBUG
+    org.hibernate.SQL: DEBUG
