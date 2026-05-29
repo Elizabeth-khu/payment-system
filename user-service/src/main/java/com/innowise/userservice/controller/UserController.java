@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -22,12 +23,14 @@ public class UserController {
 
     private final UserService userService;
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserCreateDto createDto) {
         log.info("REST request to create user: {}", createDto.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(createDto));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping
     public ResponseEntity<Page<UserResponseDto>> getAllUsers(
             @RequestParam(required = false) String name,
@@ -37,26 +40,30 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers(name, surname, pageable));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or #id == authentication.principal")
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable String id) {
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable("id") String id) {
         log.info("REST request to get user by id: {}", id);
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or #id == authentication.principal")
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponseDto> updateUser(@PathVariable String id, @Valid @RequestBody UserUpdateDto updateDto) {
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable("id") String id, @Valid @RequestBody UserUpdateDto updateDto) {
         log.info("REST request to update user with id: {}", id);
         return ResponseEntity.ok(userService.updateUser(id, updateDto));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<UserResponseDto> activateUser(@PathVariable String id) {
+    public ResponseEntity<UserResponseDto> activateUser(@PathVariable("id") String id) {
         log.info("REST request to activate user with id: {}", id);
         return ResponseEntity.ok(userService.activateUser(id));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivateUser(@PathVariable String id) {
+    public ResponseEntity<Void> deactivateUser(@PathVariable("id") String id) {
         log.info("REST request to deactivate user with id: {}", id);
         userService.deactivateUser(id);
         return ResponseEntity.noContent().build();
