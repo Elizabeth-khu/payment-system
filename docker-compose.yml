@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
 
-  redis:
+  user-redis:
     image: redis:7.2-alpine
     container_name: user-redis
     ports:
