@@ -5,6 +5,7 @@ import com.innowise.authservice.dto.AuthResponse;
 import com.innowise.authservice.dto.RegisterRequest;
 import com.innowise.authservice.entity.UserCredential;
 import com.innowise.authservice.exception.InvalidTokenException;
+import com.innowise.authservice.exception.UserAlreadyExistsException;
 import com.innowise.authservice.exception.UserNotFoundException;
 import com.innowise.authservice.repository.UserCredentialRepository;
 import com.innowise.authservice.security.JwtService;
@@ -34,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (repository.findByLogin(request.getLogin()).isPresent()) {
             log.warn("User with login {} already exists", request.getLogin());
-            throw new RuntimeException("User with this login already exists");
+            throw new UserAlreadyExistsException("User with this login already exists");
         }
 
         var user = UserCredential.builder()

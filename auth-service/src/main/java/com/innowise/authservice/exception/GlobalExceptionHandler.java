@@ -63,4 +63,11 @@ public class GlobalExceptionHandler {
         log.error("Internal server error: ", ex);
         return new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error occurred", LocalDateTime.now());
     }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+        log.error("User registration failed: {}", ex.getMessage());
+        return new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage(), LocalDateTime.now());
+    }
 }
