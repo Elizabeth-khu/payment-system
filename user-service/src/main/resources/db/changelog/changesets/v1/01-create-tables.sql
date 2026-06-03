@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset lizavetakhudalei:01-create-users-and-cards
+-- changeset lizaveta:01-create-users-and-cards
 CREATE TABLE users (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
