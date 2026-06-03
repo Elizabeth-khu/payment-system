@@ -3,9 +3,11 @@ package com.innowise.authservice.service;
 import com.innowise.authservice.dto.AuthRequest;
 import com.innowise.authservice.dto.AuthResponse;
 import com.innowise.authservice.dto.RegisterRequest;
+import com.innowise.authservice.dto.TokenValidationResponse;
 import com.innowise.authservice.entity.Role;
 import com.innowise.authservice.entity.UserCredential;
 import com.innowise.authservice.exception.InvalidTokenException;
+import com.innowise.authservice.exception.UserAlreadyExistsException;
 import com.innowise.authservice.exception.UserNotFoundException;
 import com.innowise.authservice.repository.UserCredentialRepository;
 import com.innowise.authservice.security.JwtService;
@@ -32,7 +34,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
-
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -63,13 +64,9 @@ class AuthServiceTest {
 
         when(repository.findByLogin(request.getLogin())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(request.getPassword())).thenReturn("encoded_pass");
-        when(jwtService.generateToken(any())).thenReturn("access");
-        when(jwtService.generateRefreshToken(any())).thenReturn("refresh");
 
-        AuthResponse response = authService.saveCredentials(request);
+        authService.saveCredentials(request);
 
-        assertNotNull(response);
-        assertEquals("access", response.getAccessToken());
         verify(repository, times(1)).save(any(UserCredential.class));
     }
 
@@ -81,7 +78,7 @@ class AuthServiceTest {
 
         when(repository.findByLogin(request.getLogin())).thenReturn(Optional.of(new UserCredential()));
 
-        assertThrows(RuntimeException.class, () -> authService.saveCredentials(request));
+        assertThrows(UserAlreadyExistsException.class, () -> authService.saveCredentials(request));
         verify(repository, never()).save(any());
     }
 
@@ -118,7 +115,7 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Validate Token: Return true when token is valid")
+    @DisplayName("Validate Token: Return valid response when token is valid")
     void validateToken_Success() {
         String token = "valid_token";
         String userId = "user-1";
@@ -126,19 +123,26 @@ class AuthServiceTest {
 
         when(jwtService.extractUserId(token)).thenReturn(userId);
         when(repository.findByUserId(userId)).thenReturn(Optional.of(user));
-        when(jwtService.isTokenValid(token, user)).thenReturn(true);
+        when(jwtService.isAccessTokenValid(token, user)).thenReturn(true);
+        when(jwtService.extractRole(token)).thenReturn("ROLE_USER");
 
-        assertTrue(authService.validateToken(token));
+        TokenValidationResponse response = authService.validateToken(token);
+
+        assertTrue(response.isValid());
+        assertEquals("user-1", response.getUserId());
+        assertEquals("ROLE_USER", response.getRole());
     }
 
     @Test
-    @DisplayName("Validate Token: Return false when exception occurs")
+    @DisplayName("Validate Token: Return invalid response when exception occurs")
     void validateToken_Exception() {
         String token = "invalid_token";
 
         when(jwtService.extractUserId(token)).thenThrow(new RuntimeException("Token expired"));
 
-        assertFalse(authService.validateToken(token));
+        TokenValidationResponse response = authService.validateToken(token);
+
+        assertFalse(response.isValid());
     }
 
     @Test
@@ -150,7 +154,7 @@ class AuthServiceTest {
 
         when(jwtService.extractUserId(refreshToken)).thenReturn(userId);
         when(repository.findByUserId(userId)).thenReturn(Optional.of(user));
-        when(jwtService.isTokenValid(refreshToken, user)).thenReturn(true);
+        when(jwtService.isRefreshTokenValid(refreshToken, user)).thenReturn(true);
         when(jwtService.generateToken(user)).thenReturn("new_access");
 
         AuthResponse response = authService.refreshToken(refreshToken);

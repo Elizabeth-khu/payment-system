@@ -3,6 +3,7 @@ package com.innowise.authservice.service.impl;
 import com.innowise.authservice.dto.AuthRequest;
 import com.innowise.authservice.dto.AuthResponse;
 import com.innowise.authservice.dto.RegisterRequest;
+import com.innowise.authservice.dto.TokenValidationResponse;
 import com.innowise.authservice.entity.UserCredential;
 import com.innowise.authservice.exception.InvalidTokenException;
 import com.innowise.authservice.exception.UserAlreadyExistsException;
@@ -30,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponse saveCredentials(RegisterRequest request) {
+    public void saveCredentials(RegisterRequest request) {
         log.info("Saving new credentials for login: {}", request.getLogin());
 
         if (repository.findByLogin(request.getLogin()).isPresent()) {
@@ -47,14 +48,6 @@ public class AuthServiceImpl implements AuthService {
 
         repository.save(user);
         log.info("Credentials saved successfully for user ID: {}", user.getUserId());
-
-        var jwtToken = jwtService.generateToken(user);
-        var refreshToken = jwtService.generateRefreshToken(user);
-
-        return AuthResponse.builder()
-                .accessToken(jwtToken)
-                .refreshToken(refreshToken)
-                .build();
     }
 
     @Override
@@ -80,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public boolean validateToken(String token) {
+    public TokenValidationResponse validateToken(String token) {
         try {
             String userId = jwtService.extractUserId(token);
             log.debug("Validating token for user ID: {}", userId);
@@ -88,10 +81,17 @@ public class AuthServiceImpl implements AuthService {
             var user = repository.findByUserId(userId)
                     .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
-            return jwtService.isTokenValid(token, user);
+            boolean isValid = jwtService.isAccessTokenValid(token, user);
+
+            if (isValid) {
+                String role = jwtService.extractRole(token);
+                return new TokenValidationResponse(true, userId, role);
+            }
+            return new TokenValidationResponse(false, null, null);
+
         } catch (Exception e) {
             log.error("Token validation failed: {}", e.getMessage());
-            return false;
+            return new TokenValidationResponse(false, null, null);
         }
     }
 
@@ -104,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
             var user = repository.findByUserId(userId)
                     .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
-            if (jwtService.isTokenValid(refreshToken, user)) {
+            if (jwtService.isRefreshTokenValid(refreshToken, user)) {
                 var accessToken = jwtService.generateToken(user);
                 log.info("Access token successfully refreshed for user ID: {}", userId);
 

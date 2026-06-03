@@ -1,6 +1,7 @@
 package com.innowise.authservice.config;
 
 import com.innowise.authservice.repository.UserCredentialRepository;
+import com.innowise.authservice.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,8 +28,12 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> repository.findByLogin(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with login: " + username));
+        return username -> {
+            var user = repository.findByLogin(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with login: " + username));
+
+            return new CustomUserDetails(user);
+        };
     }
 
     @Bean
@@ -57,8 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider());
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }

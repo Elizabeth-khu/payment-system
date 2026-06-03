@@ -3,11 +3,17 @@ package com.innowise.authservice.controller;
 import com.innowise.authservice.dto.AuthRequest;
 import com.innowise.authservice.dto.AuthResponse;
 import com.innowise.authservice.dto.RegisterRequest;
+import com.innowise.authservice.dto.TokenRequest;
+import com.innowise.authservice.dto.TokenValidationResponse;
 import com.innowise.authservice.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -16,23 +22,24 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/save")
-    public ResponseEntity<AuthResponse> saveCredentials(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.saveCredentials(request));
+    @PostMapping("/register")
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest request) {
+        authService.saveCredentials(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> createToken(@Valid @RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         return ResponseEntity.ok(authService.createToken(request));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refreshToken(@RequestParam String refreshToken) {
-        return ResponseEntity.ok(authService.refreshToken(refreshToken));
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody TokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request.getToken()));
     }
 
-    @GetMapping("/validate")
-    public ResponseEntity<Boolean> validateToken(@RequestParam String token) {
-        return ResponseEntity.ok(authService.validateToken(token));
+    @PostMapping("/validate")
+    public ResponseEntity<TokenValidationResponse> validate(@Valid @RequestBody TokenRequest request) {
+        return ResponseEntity.ok(authService.validateToken(request.getToken()));
     }
 }

@@ -3,7 +3,6 @@ package com.innowise.authservice.exception;
 import com.innowise.authservice.dto.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,23 +17,17 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleUserNotFoundException(UserNotFoundException ex) {
+        log.error("User not found: {}", ex.getMessage());
+        return new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage(), LocalDateTime.now());
     }
 
     @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidTokenException(InvalidTokenException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleInvalidTokenException(InvalidTokenException ex) {
+        log.error("Token error: {}", ex.getMessage());
+        return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), ex.getMessage(), LocalDateTime.now());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

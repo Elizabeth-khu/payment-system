@@ -26,16 +26,20 @@ public class JwtService {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshExpiration;
 
-    public String generateToken(UserCredential user) {
-        return generateToken(new HashMap<>(), user);
-    }
+    private static final String TOKEN_TYPE_CLAIM = "type";
+    private static final String ACCESS_TOKEN_TYPE = "ACCESS";
+    private static final String REFRESH_TOKEN_TYPE = "REFRESH";
 
-    public String generateToken(Map<String, Object> extraClaims, UserCredential user) {
-        return buildToken(extraClaims, user, jwtExpiration);
+    public String generateToken(UserCredential user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
+        return buildToken(claims, user, jwtExpiration);
     }
 
     public String generateRefreshToken(UserCredential user) {
-        return buildToken(new HashMap<>(), user, refreshExpiration);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE);
+        return buildToken(claims, user, refreshExpiration);
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserCredential user, long expiration) {
@@ -50,7 +54,15 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserCredential user) {
+    public boolean isAccessTokenValid(String token, UserCredential user) {
+        return isTokenValid(token, user) && ACCESS_TOKEN_TYPE.equals(extractTokenType(token));
+    }
+
+    public boolean isRefreshTokenValid(String token, UserCredential user) {
+        return isTokenValid(token, user) && REFRESH_TOKEN_TYPE.equals(extractTokenType(token));
+    }
+
+    private boolean isTokenValid(String token, UserCredential user) {
         final String userId = extractUserId(token);
         return (userId.equals(user.getUserId())) && !isTokenExpired(token);
     }
@@ -66,6 +78,11 @@ public class JwtService {
     public String extractRole(String token) {
         Claims claims = extractAllClaims(token);
         return claims.get("role", String.class);
+    }
+
+    private String extractTokenType(String token) {
+        Claims claims = extractAllClaims(token);
+        return claims.get(TOKEN_TYPE_CLAIM, String.class);
     }
 
     private Date extractExpiration(String token) {
