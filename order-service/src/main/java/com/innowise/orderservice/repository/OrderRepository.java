@@ -1,0 +1,14 @@
+package com.innowise.orderservice.repository;
+
+import com.innowise.orderservice.entity.Order;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecificationExecutor<Order> {
+    boolean existsByIdempotencyKey(String idempotencyKey);
+    List<Order> findByUserId(String userId);
+}

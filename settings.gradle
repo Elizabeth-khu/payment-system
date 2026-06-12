@@ -2,3 +2,4 @@ rootProject.name = 'order-management-system'
 
 include 'user-service'
 include 'auth-service'
+include 'order-service'
