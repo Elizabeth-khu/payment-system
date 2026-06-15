@@ -10,11 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OrderSpecification {
+    private OrderSpecification() {}
 
-    public static Specification<Order> filterBy(LocalDateTime fromDate, LocalDateTime toDate, List<OrderStatus> statuses) {
+    public static Specification<Order> filterBy(String userId, LocalDateTime fromDate, LocalDateTime toDate, List<OrderStatus> statuses) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
+            if (userId != null && !userId.isBlank()) {
+                predicates.add(criteriaBuilder.equal(root.get("userId"), userId));
+            }
             if (fromDate != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
             }

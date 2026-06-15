@@ -1,6 +1,6 @@
 package com.innowise.orderservice.service.impl;
 
-import com.innowise.orderservice.client.UserServiceClient;
+import com.innowise.orderservice.client.UserServiceAdapter;
 import com.innowise.orderservice.dto.OrderCreateRequest;
 import com.innowise.orderservice.dto.OrderItemRequest;
 import com.innowise.orderservice.dto.OrderResponse;
@@ -37,21 +37,21 @@ import java.util.Map;
 @Slf4j
 public class OrderServiceImpl implements OrderService {
 
-    private final UserServiceClient userServiceClient;
+    private final UserServiceAdapter userServiceAdapter;
     private final OrderRepository orderRepository;
     private final ItemRepository itemRepository;
     private final OrderMapper orderMapper;
 
     @Override
     @Transactional
-    public OrderResponse createOrder(OrderCreateRequest request) {
-        if (orderRepository.existsByIdempotencyKey(request.idempotencyKey())) {
+    public OrderResponse createOrder(String idempotencyKey, OrderCreateRequest request) {
+        if (orderRepository.existsByIdempotencyKey(idempotencyKey)) {
             throw new DuplicateOrderException("Order with this idempotency key already processing");
         }
 
         Order order = Order.builder()
                 .userId(request.userId())
-                .idempotencyKey(request.idempotencyKey())
+                .idempotencyKey(idempotencyKey)
                 .status(OrderStatus.CREATED)
                 .build();
 
@@ -75,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalPrice(totalPrice);
         Order savedOrder = orderRepository.save(order);
 
-        UserInfoResponse user = getUserInfo(order.getUserId());
+        UserInfoResponse user = userServiceAdapter.getUserInfo(order.getUserId());
         return orderMapper.toResponse(savedOrder, user);
     }
 
@@ -84,14 +84,15 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse getOrderById(String id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));
-        UserInfoResponse user = getUserInfo(order.getUserId());
-        return orderMapper.toResponse(order,user);
+
+        UserInfoResponse user = userServiceAdapter.getUserInfo(order.getUserId());
+        return orderMapper.toResponse(order, user);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderResponse> getOrders(LocalDateTime from, LocalDateTime to, List<OrderStatus> statuses, Pageable pageable) {
-        Specification<Order> spec = OrderSpecification.filterBy(from, to, statuses);
+    public Page<OrderResponse> getOrders(String userId, LocalDateTime from, LocalDateTime to, List<OrderStatus> statuses, Pageable pageable) {
+        Specification<Order> spec = OrderSpecification.filterBy(userId, from, to, statuses);
         Page<Order> ordersPage = orderRepository.findAll(spec, pageable);
 
         List<String> distinctUserIds = ordersPage.getContent().stream()
@@ -101,24 +102,13 @@ public class OrderServiceImpl implements OrderService {
 
         Map<String, UserInfoResponse> usersCache = new HashMap<>();
         for (String uid : distinctUserIds) {
-            usersCache.put(uid, getUserInfo(uid));
+            usersCache.put(uid, userServiceAdapter.getUserInfo(uid));
         }
 
         return ordersPage.map(order -> {
             UserInfoResponse user = usersCache.get(order.getUserId());
             return orderMapper.toResponse(order, user);
         });
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public List<OrderResponse> getOrdersByUserId(String userId) {
-        return orderRepository.findByUserId(userId).stream()
-                .map(order -> {
-                    UserInfoResponse user = getUserInfo(order.getUserId());
-                    return orderMapper.toResponse(order,user);
-                })
-                .toList();
     }
 
     @Override
@@ -128,7 +118,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(id));
 
         order.setStatus(request.status());
-        UserInfoResponse user = getUserInfo(order.getUserId());
+        UserInfoResponse user = userServiceAdapter.getUserInfo(order.getUserId());
         return orderMapper.toResponse(order, user);
     }
 
@@ -139,16 +129,5 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderNotFoundException(id);
         }
         orderRepository.deleteById(id);
-    }
-
-    @io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker(name = "userService", fallbackMethod = "fallbackUserInfo")
-    private UserInfoResponse getUserInfo(String userId) {
-        return userServiceClient.getUserById(userId);
-    }
-
-    @SuppressWarnings("unused")
-    private UserInfoResponse fallbackUserInfo(String userId, Throwable t) {
-        log.warn("User service is currently unavailable for userId: {}. Fallback triggered. Reason: {}", userId, t.getMessage());
-        return new UserInfoResponse("unknown", "System", "Unavailable", userId);
     }
 }

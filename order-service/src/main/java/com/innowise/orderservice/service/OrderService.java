@@ -10,10 +10,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderService {
-    OrderResponse createOrder(OrderCreateRequest request);
+    OrderResponse createOrder(String idempotencyKey, OrderCreateRequest request);
     OrderResponse getOrderById(String id);
-    List<OrderResponse> getOrdersByUserId(String userId);
-    Page<OrderResponse> getOrders(LocalDateTime from, LocalDateTime to, List<OrderStatus> statuses, Pageable pageable);
+    Page<OrderResponse> getOrders(String userId, LocalDateTime from, LocalDateTime to, List<OrderStatus> statuses, Pageable pageable);
     OrderResponse updateOrderStatus(String id, OrderUpdateRequest request);
     void deleteOrderById(String id);
 }

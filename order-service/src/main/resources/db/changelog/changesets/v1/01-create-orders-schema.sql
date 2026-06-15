@@ -26,6 +26,8 @@ CREATE TABLE order_items (
     order_id VARCHAR(36) NOT NULL,
     item_id VARCHAR(36) NOT NULL,
     quantity INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
     CONSTRAINT fk_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     CONSTRAINT fk_item FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
 );

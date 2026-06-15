@@ -2,6 +2,7 @@ package com.innowise.orderservice.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,11 +15,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * Entity representing a specific item within an order.
- * Maps the many-to-one relationship between items and their parent order.
- */
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "order_items")
 @Getter
@@ -26,10 +28,12 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -42,6 +46,14 @@ public class OrderItem {
 
     @Column(nullable = false)
     private Integer quantity;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Override
     public boolean equals(Object o) {

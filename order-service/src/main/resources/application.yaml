@@ -17,7 +17,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
 
 user-service:
   url: ${USER_SERVICE_URL:http://localhost:8080}

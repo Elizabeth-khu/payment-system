@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,29 +34,27 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderCreateRequest request) {
-        OrderResponse response = orderService.createOrder(request);
+    public ResponseEntity<OrderResponse> createOrder(
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @Valid @RequestBody OrderCreateRequest request) {
+        OrderResponse response = orderService.createOrder(idempotencyKey, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable String id) {
-        return ResponseEntity.ok(orderService.getOrderById(id));
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<OrderResponse>> getOrdersByUserId(@PathVariable String userId) {
-        return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
 
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getOrders(
+            @RequestParam(required = false) String userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(required = false) List<OrderStatus> statuses,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(orderService.getOrders(from, to, statuses, pageable));
+        return ResponseEntity.ok(orderService.getOrders(userId, from, to, statuses, pageable));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrderById(@PathVariable String id) {
+        return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
     @PatchMapping("/{id}")

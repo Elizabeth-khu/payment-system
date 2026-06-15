@@ -82,7 +82,7 @@ class UserControllerIT extends IntegrationTestBase {
     void shouldReturnUserById_WhenAdmin() throws Exception {
         mockMvc.perform(get("/api/v1/users/{id}", savedUser.getId())
                         .with(auth("admin-id", "ROLE_ADMIN")))
-                .andDo(print()) // <--- ВОТ ЭТА МАГИЧЕСКАЯ СТРОЧКА
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("test@mail.com"));
     }
