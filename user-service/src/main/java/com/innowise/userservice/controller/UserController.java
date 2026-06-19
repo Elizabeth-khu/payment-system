@@ -13,7 +13,15 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
@@ -35,7 +43,7 @@ public class UserController {
     public ResponseEntity<Page<UserResponseDto>> getAllUsers(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String surname,
-            @PageableDefault(size = 10, page = 0) Pageable pageable) {
+            @PageableDefault Pageable pageable) {
         log.info("REST request to get all users");
         return ResponseEntity.ok(userService.getAllUsers(name, surname, pageable));
     }
