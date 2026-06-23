@@ -33,7 +33,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
 
         boolean isApiOpen = openApiEndpoints.stream()
-                .anyMatch(uri -> request.getURI().getPath().contains(uri));
+                .anyMatch(uri -> request.getURI().getPath().startsWith(uri));
 
         if (isApiOpen) {
             return chain.filter(exchange);
